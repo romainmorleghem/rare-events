@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Mathematics of the Unlikely</title>
+<meta name="description" content="Rare Events, part 1: interactive companion. Look at coin flips through three lenses (law of large numbers, central limit theorem, large deviations), estimate a 10^-37 probability with a rigged coin, and see how rare events actually happen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<main>
+<p class="hint"><a href="../">Rare Events</a> · Part 1</p>
+<h1>The Mathematics of the Unlikely</h1>
+<p class="lede">Flip 1000 coins. What are the chances of 700 heads or more? The bell curve answers
+$8.5\times10^{-37}$; the truth is $8.8\times10^{-38}$. For 900 heads it is wrong by a factor $10^{20}$.
+This page lets you see why, with nothing more than coins and counting.</p>
+<video class="video" controls preload="metadata" playsinline poster="poster.jpg"><source src="ep01_1080p.mp4" type="video/mp4">Your browser does not support HTML5 video.</video>
+<nav class="toc"><a href="#s1">1 · Three lenses</a><a href="#s2">2 · The rigged coin</a><a href="#s3">3 · Conspiracy or culprit</a><a href="#s4">4 · The numbers</a></nav>
+
+<h2 id="s1"><span class="num">1</span>One histogram, three lenses</h2>
+<p>Below is the <em>exact</em> probability of each possible number of heads out of $n$ coins (gold).
+Switch lenses to rescale the very same histogram:</p>
+<ul>
+<li><b style="color:var(--lln)">Lens 1</b>: the proportion of heads itself. As $n$ grows it piles up on ½:
+the <em>law of large numbers</em>.</li>
+<li><b style="color:var(--clt)">Lens 2</b>: zoom by $\sqrt n$ around ½. The shape freezes into the bell curve:
+the <em>central limit theorem</em>.</li>
+<li><b style="color:var(--ldp)">Lens 3</b>: take $-\frac1n\ln P$. The shape freezes into a bowl $I(x)$, the
+<em>rate function</em>: $P(\text{proportion}\approx x)\approx e^{-nI(x)}$. That is <em>large deviations</em>.</li>
+</ul>
+<div class="widget">
+  <canvas id="lens"></canvas>
+  <div class="controls">
+    <span class="seg" id="lens-seg"><button data-l="1">Lens 1</button><button data-l="2">Lens 2</button><button data-l="3" class="on">Lens 3</button></span>
+    <label>coins $n$ <input type="range" id="n" min="0" max="100" step="1" value="70"><output id="n-o"></output></label>
+    <label><input type="checkbox" id="bell" checked> bell curve</label>
+    <label><input type="checkbox" id="bowl" checked> bowl $I(x)$</label>
+  </div>
+  <div class="controls">
+    <label>at least <input type="range" id="thr" min="0.5" max="1" step="0.005" value="0.7"><output id="thr-o"></output> heads</label>
+  </div>
+  <div class="tablewrap"><table id="tail"></table></div>
+  <p class="hint">In lens 3 the bell curve becomes the parabola $2(x-\tfrac12)^2$: it fits the bottom of the bowl
+  and nothing else. The table compares, for the threshold you chose, the exact probability with the bell curve
+  and with $e^{-nI(x)}$ (which gets the exponent right, up to a modest factor).</p>
+</div>
+
+<h2 id="s2"><span class="num">2</span>Seeing the invisible: the rigged coin</h2>
+<p>Simulating fair coins never shows you a $10^{-37}$ event. The trick (<em>importance sampling</em>):
+flip a coin rigged to land heads with probability $q$, and give every run with $h$ heads and $t$ tails the weight
+$$w = \Big(\frac{0.5}{q}\Big)^{h}\Big(\frac{0.5}{1-q}\Big)^{t},$$
+which undoes the cheat. The average of $w\times[\text{hit}]$ is an unbiased estimate of the fair-coin probability.
+The best $q$ is the one that makes the rare event typical: $q = k/n$.</p>
+<div class="widget">
+  <canvas id="rig"></canvas>
+  <div class="controls">
+    <label>coins $n$ <input type="range" id="rn" min="20" max="2000" step="10" value="1000"><output id="rn-o"></output></label>
+    <label>at least $k$ heads <input type="range" id="rk" min="0.5" max="0.98" step="0.01" value="0.7"><output id="rk-o"></output></label>
+    <label>rigged $q$ <input type="range" id="rq" min="0.5" max="0.99" step="0.01" value="0.7"><output id="rq-o"></output></label>
+  </div>
+  <div class="controls">
+    <button id="run-fair">Run 100 000 fair experiments</button>
+    <button id="run-rig">Run 10 000 rigged experiments</button>
+    <button id="best-q">Set $q = k/n$</button>
+  </div>
+  <div class="readout" id="rig-read"></div>
+</div>
+
+<h2 id="s3"><span class="num">3</span>How does the unlikely happen? Conspiracy or culprit</h2>
+<p>Take 100 random amounts with average 1, and force their total to be $c$ times larger than usual.
+<b style="color:var(--tails)">Ordinary</b> amounts (exponential, like the cost of car accidents) share the extra
+burden: every amount grows a little, a <em>conspiracy</em>. <b style="color:var(--clt)">Wild</b> amounts
+(Pareto with exponent $\alpha$, like storm or earthquake damage) put it all on one <em>culprit</em>.</p>
+<div class="widget">
+  <canvas id="cc"></canvas>
+  <div class="controls">
+    <span class="seg" id="kind-seg"><button data-k="light" class="on">Ordinary</button><button data-k="heavy">Wild</button></span>
+    <label>total $= c\times 100$, $c$ <input type="range" id="c" min="1.2" max="3" step="0.1" value="2"><output id="c-o"></output></label>
+    <label>wildness $\alpha$ <input type="range" id="alpha" min="1.6" max="3" step="0.1" value="2.5"><output id="alpha-o"></output></label>
+    <button id="draw">Draw a new sample</button>
+  </div>
+  <div class="readout" id="cc-read"></div>
+  <p class="hint">Ordinary amounts are drawn exactly given the total (they are then uniform on the simplex).
+  Wild amounts are drawn by brute force: we generate batches of 100 until one has a total of at least $c\times100$.</p>
+</div>
+
+<h2 id="s4"><span class="num">4</span>The numbers in the video</h2>
+<div class="tablewrap"><table id="facts"></table></div>
+<p class="hint">All computed in <code>ep01_unlikely/compute/facts.py</code> (exact binomial sums in log space,
+seeded simulations). Source: <a href="https://github.com/romainmorleghem/rare-events">github.com/romainmorleghem/rare-events</a>.</p>
+</main>
+<script type="module" src="ep1.js"></script>
+</body>
+</html>
